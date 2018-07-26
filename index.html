@@ -1,0 +1,3513 @@
+<html>
+<head>
+<style>
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  position: relative;
+}
+
+/* stylesheet for your custom graph */
+
+.states {
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+}
+
+.states-choropleth {
+  fill: #ccc;
+}
+
+#tooltip-container {
+  position: absolute;
+  background-color: #fff;
+  color: #000;
+  padding: 10px;
+  display: none;
+}
+
+.tooltip_key {
+  font-weight: bold;
+}
+
+.tooltip_value {
+  margin-left: 20px;
+  float: right;
+}
+.container{ width:100%; }
+#chart1{ width:50%;float:left; }
+#chart2{ width:50%;float:right; }
+.main {
+    width: 1000px;
+    margin: 0 auto;
+}
+#canvas-svg{ padding-left:150px; }
+#comments{ text-align:center; }
+.desc{ padding-bottom:30px; }
+</style>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+</head>
+
+<body>
+
+<div class="main">
+<div id="tooltip-container"></div>
+
+<div id="canvas-svg"></div>
+<div id="comments"></div>
+<div class="container" style="display:none;">
+<svg id="chart1" width="600" height="500"></svg>
+<svg id="chart2" width="600" height="500"></svg>
+</div>
+<div class="desc">
+<span>
+
+<p>Question: Which state in US is financially feasible to reside based on house prices and college tuition trends?</p>
+
+<p>The aim of this dashboard visualization is to present an analytical overview of the trend of house prices and college tuition fees variance across US states.</p>
+
+<h2>Description :</h2>
+Financial feasibility analysis is one of the key decision drivers for any family or individual for residing in a particular state. Hence the current median income by state is provided for viewer selection in the map of US. The states with low median income are colored RED and high with color GREEN. Upon selection of state from the map there are two trend graphs that become visible. The graphs are filtered to the trend lines of the user selected state/s (multiple selection is allowed).  Both the trend line charts has Year in the X-axis and average house prices and average college tuitions in Y - axis respectively.These graphs provide information regarding the trends of average house prices and college tutions in that state in a range of last five years. This trend analysis is crititcal  for the viewer to estimate of cost of living in the selected state.
+
+<h2>Conclusion:</h2>
+The dashboard facilitates the viewer in decision making in  various ways. Using this trend analysis someone can project the estimated cost of living in a state and compare his salary with the current median income of that state.  More generally someone can decide on moving to a particular state and settling down based on the analysis drawn from the dashboard. Another very relevant and important usage of  this dashboard is in salary negotiation with future employer based on the cost of living of the state, and thereby deciding on relocation.
+
+<h2>Data Sources :</h2>
+<b>House prices :</b> <a href="https://www.zillow.com/research/data/" target="_blank">https://www.zillow.com/research/data/</a></br>
+<b>Median Income :</b> <a href="https://www.census.gov/topics/income-poverty/income/data/tables.2017.html" target="_blank">https://www.census.gov/topics/income-poverty/income/data/tables.2017.html</a></br>
+<b>College Tuition :</b> <a href="https://trends.collegeboard.org/college-pricing/figures-tables/tuition-fees-sector-state-over-time" target="_blank">https://trends.collegeboard.org/college-pricing/figures-tables/tuition-fees-sector-state-over-time</a></br></span>
+</div>
+
+</div>
+
+<script src="js/d3.min.js"></script>
+<script src="js/topojson.min.js"></script>
+<script src="js/jquery.min.js"></script>
+<script src="js/d3.v4.min.js"></script>
+
+
+<script>
+
+function comments(state)
+{
+  var json_arr = [
+  {
+    "state": "Alabama",
+    "State Code": "AL",
+    "comments": "The median income being $47k, the house prices shows in low range and college prices shows a rising trend."
+  },
+  {
+    "state": "Arizona",
+    "State Code": "AZ",
+    "comments": "The median income being $57k, the house prices shows a decent growth in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "Arkansas",
+    "State Code": "AR",
+    "comments": "The median income being $46k, the house prices shows in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "California",
+    "State Code": "CA",
+    "comments": "The median income being $66k, the house prices shows a maximum growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Colorado",
+    "State Code": "CO",
+    "comments": "The median income being $70k, the house prices shows a decent growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Connecticut",
+    "State Code": "CT",
+    "comments": "The median income being $75k, the house prices shows a decent growth and college prices shows a constant growing trend."
+  },
+  {
+    "state": "Delaware",
+    "State Code": "DE",
+    "comments": "The median income being $58k, the house prices shows a medium growth in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "District of Columbia",
+    "State Code": "DC",
+    "comments": "The median income is around $71k"
+  },
+  {
+    "state": "Florida",
+    "State Code": "FL",
+    "comments": "The median income being $51k, the house prices shows a very low growth and college prices shows a constant downward trend."
+  },
+  {
+    "state": "Georgia",
+    "State Code": "GA",
+    "comments": "The median income being $53k, the house prices shows a very low growth and college prices shows a constant downward trend."
+  },
+  {
+    "state": "Hawaii",
+    "State Code": "HI",
+    "comments": "NA"
+  },
+  {
+    "state": "Idaho",
+    "State Code": "ID",
+    "comments": "The median income being $56k, the house prices shows a  growth in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "Illinois",
+    "State Code": "IL",
+    "comments": "The median income being $61k, the house prices shows a minimum growth and college prices shows a constant trend in higher range."
+  },
+  {
+    "state": "Indiana",
+    "State Code": "IN",
+    "comments": "The median income being $56k, the house prices shows a decent growth in low range and college prices shows a constant  trend."
+  },
+  {
+    "state": "Iowa",
+    "State Code": "IA",
+    "comments": "The median income being $59k, the house prices shows a medium growth in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "Kansas",
+    "State Code": "KS",
+    "comments": "The median income being $56k, the house prices shows a constant in low range and college prices shows a growing trend."
+  },
+  {
+    "state": "Kentucky",
+    "State Code": "KY",
+    "comments": "The median income being $56k, the house prices shows a decent growth in low range and college prices shows a constant grow trend."
+  },
+  {
+    "state": "Louisiana",
+    "State Code": "LA",
+    "comments": "The median income being $42k, the house prices shows in low range and college prices shows a rising trend."
+  },
+  {
+    "state": "Maine",
+    "State Code": "ME",
+    "comments": "The median income being $50k, the house prices shows a very low growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Maryland",
+    "State Code": "MD",
+    "comments": "The median income being $73k, the house prices shows a decent growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Massachusetts",
+    "State Code": "MA",
+    "comments": "The median income being $72k, the house prices shows a decent growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Michigan",
+    "State Code": "MI",
+    "comments": "The median income being $57k, the house prices shows a decent growth in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "Minnesota",
+    "State Code": "MN",
+    "comments": "The median income being $70k, the house prices shows a decent growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Mississippi",
+    "State Code": "MS",
+    "comments": "The median income being $41k, the house prices shows in low range and college prices shows a rising trend."
+  },
+  {
+    "state": "Missouri",
+    "State Code": "MO",
+    "comments": "The median income being $55k, the house prices shows a decent low range and college prices shows a constant trend."
+  },
+  {
+    "state": "Montana",
+    "State Code": "MT",
+    "comments": "The median income being $57k, the house prices shows a decent growth in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "Nebraska",
+    "State Code": "NE",
+    "comments": "The median income being $59k, the house prices shows a medium growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Nevada",
+    "State Code": "NV",
+    "comments": "The median income being $55k, the house prices shows a decent growth and college prices shows a constant trend."
+  },
+  {
+    "state": "New Hampshire",
+    "State Code": "NH",
+    "comments": "The median income being $73k, the house prices shows a decent growth and college prices shows a constant trend in the highest level."
+  },
+  {
+    "state": "New Jersey",
+    "State Code": "NJ",
+    "comments": "The median income being $67k, the house prices shows a decent growth in low range and college prices shows a constant trend in the higher level."
+  },
+  {
+    "state": "New Mexico",
+    "State Code": "NM",
+    "comments": "The median income being $48k, the house prices shows a constant in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "New York",
+    "State Code": "NY",
+    "comments": "The median income being $61k, the house prices shows a constant growth and college prices shows a constant trend."
+  },
+  {
+    "state": "North Carolina",
+    "State Code": "NC",
+    "comments": "The median income being $53k, the house prices shows a decent low range and college prices shows a constant trend."
+  },
+  {
+    "state": "North Dakota",
+    "State Code": "ND",
+    "comments": "The median income being $60k, the house prices shows a constant trend and college prices also shows a constant trend in the medium level."
+  },
+  {
+    "state": "Ohio",
+    "State Code": "OH",
+    "comments": "The median income being $54k, the house prices shows a very low growth and college prices shows a constant  trend."
+  },
+  {
+    "state": "Oklahoma",
+    "State Code": "OK",
+    "comments": "The median income being $51k, the house prices shows a very low growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Oregon",
+    "State Code": "OR",
+    "comments": "The median income being $59k, the house prices shows a medium growth and college prices shows a constant trend."
+  },
+  {
+    "state": "Pennsylvania",
+    "State Code": "PA",
+    "comments": "The median income being $60k, the house prices shows a medium growth in low range and college prices shows a constant trend in highest level."
+  },
+  {
+    "state": "Rhode Island",
+    "State Code": "RI",
+    "comments": "The median income being $61k, the house prices shows a constant growth and college prices shows a constant rising trend."
+  },
+  {
+    "state": "South Carolina",
+    "State Code": "SC",
+    "comments": "The median income being $54k, the house prices shows a very low growth and college prices shows a constant  trend in the high level."
+  },
+  {
+    "state": "South Dakota",
+    "State Code": "SD",
+    "comments": "The median income being $57k, the house prices shows a constant in low range and college prices also shows a constant trend."
+  },
+  {
+    "state": "Tennessee",
+    "State Code": "TN",
+    "comments": "The median income being $51k, the house prices shows a very low growth and college prices shows a constant upward trend."
+  },
+  {
+    "state": "Texas",
+    "State Code": "TX",
+    "comments": "The median income being $58k, the house prices shows a growth in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "Utah",
+    "State Code": "UT",
+    "comments": "The median income being $67k, the house prices shows a decent growth in low range and college prices shows a constant trend."
+  },
+  {
+    "state": "Vermont",
+    "State Code": "VT",
+    "comments": "The median income being $60k, the house prices shows a falling trend in low range and college prices shows a constant soring at the highest level."
+  },
+  {
+    "state": "Virginia",
+    "State Code": "VA",
+    "comments": "The median income being $66k, the house prices shows a constant in low range and college prices shows a growing trend."
+  },
+  {
+    "state": "Washington",
+    "State Code": "WA",
+    "comments": "The median income being $70k, the house prices shows a decent growth and college prices shows a downward trend."
+  },
+  {
+    "state": "West Virginia",
+    "State Code": "WV",
+    "comments": "The median income being $44k, the house prices shows in low range and college prices shows a rising trend."
+  },
+  {
+    "state": "Wisconsin",
+    "State Code": "WI",
+    "comments": "The median income being $59k, the house prices shows a growth in low range and college prices shows a downward trend."
+  },
+  {
+    "state": "Wyoming",
+    "State Code": "WY",
+    "comments": "The median income being $57k, the house prices shows a constant in low range and college prices shows a constant trend."
+  }
+];
+
+	var data = [];
+	for(var i = 0; i < json_arr.length; i++) {
+		var obj = json_arr[i];
+		if(obj.state == state)
+		{
+			data.push(obj);
+		}
+	}
+	$('#comments').html(data[0].comments);
+	
+}
+
+
+function house_chart(state)
+{
+	
+  var json_arr = [
+  {
+    "state": "California",
+    "year": 2013,
+    "value": 363800
+  },
+  {
+    "state": "Texas",
+    "year": 2013,
+    "value": 130442
+  },
+  {
+    "state": "New York",
+    "year": 2013,
+    "value": 235017
+  },
+  {
+    "state": "Florida",
+    "year": 2013,
+    "value": 136750
+  },
+  {
+    "state": "Illinois",
+    "year": 2013,
+    "value": 138475
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2013,
+    "value": 141025
+  },
+  {
+    "state": "Ohio",
+    "year": 2013,
+    "value": 104583
+  },
+  {
+    "state": "Michigan",
+    "year": 2013,
+    "value": 92442
+  },
+  {
+    "state": "Georgia",
+    "year": 2013,
+    "value": 118375
+  },
+  {
+    "state": "North Carolina",
+    "year": 2013,
+    "value": 136750
+  },
+  {
+    "state": "New Jersey",
+    "year": 2013,
+    "value": 259783
+  },
+  {
+    "state": "Virginia",
+    "year": 2013,
+    "value": 214592
+  },
+  {
+    "state": "Washington",
+    "year": 2013,
+    "value": 235275
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2013,
+    "value": 295508
+  },
+  {
+    "state": "Indiana",
+    "year": 2013,
+    "value": 104592
+  },
+  {
+    "state": "Arizona",
+    "year": 2013,
+    "value": 166992
+  },
+  {
+    "state": "Tennessee",
+    "year": 2013,
+    "value": 114067
+  },
+  {
+    "state": "Missouri",
+    "year": 2013,
+    "value": 123333
+  },
+  {
+    "state": "Maryland",
+    "year": 2013,
+    "value": 235350
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2013,
+    "value": 141683
+  },
+  {
+    "state": "Minnesota",
+    "year": 2013,
+    "value": 162367
+  },
+  {
+    "state": "Colorado",
+    "year": 2013,
+    "value": 228458
+  },
+  {
+    "state": "Alabama",
+    "year": 2013,
+    "value": 106542
+  },
+  {
+    "state": "South Carolina",
+    "year": 2013,
+    "value": 123225
+  },
+  {
+    "state": "Louisiana",
+    "year": 2013,
+    "value": 120733
+  },
+  {
+    "state": "Kentucky",
+    "year": 2013,
+    "value": 111808
+  },
+  {
+    "state": "Oregon",
+    "year": 2013,
+    "value": 211492
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2013,
+    "value": 93617
+  },
+  {
+    "state": "Connecticut",
+    "year": 2013,
+    "value": 218858
+  },
+  {
+    "state": "Iowa",
+    "year": 2013,
+    "value": 114500
+  },
+  {
+    "state": "Mississippi",
+    "year": 2013,
+    "value": 100867
+  },
+  {
+    "state": "Arkansas",
+    "year": 2013,
+    "value": 97133
+  },
+  {
+    "state": "Kansas",
+    "year": 2013,
+    "value": 109483
+  },
+  {
+    "state": "Utah",
+    "year": 2013,
+    "value": 209350
+  },
+  {
+    "state": "Nevada",
+    "year": 2013,
+    "value": 160258
+  },
+  {
+    "state": "New Mexico",
+    "year": 2013,
+    "value": 153917
+  },
+  {
+    "state": "West Virginia",
+    "year": 2013,
+    "value": 81967
+  },
+  {
+    "state": "Nebraska",
+    "year": 2013,
+    "value": 121683
+  },
+  {
+    "state": "Idaho",
+    "year": 2013,
+    "value": 155575
+  },
+  {
+    "state": "Hawaii",
+    "year": 2013,
+    "value": 447192
+  },
+  {
+    "state": "Maine",
+    "year": 2013,
+    "value": 175950
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2013,
+    "value": 203633
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2013,
+    "value": 209025
+  },
+  {
+    "state": "Montana",
+    "year": 2013,
+    "value": 185750
+  },
+  {
+    "state": "Delaware",
+    "year": 2013,
+    "value": 188942
+  },
+  {
+    "state": "South Dakota",
+    "year": 2013,
+    "value": 145358
+  },
+  {
+    "state": "Alaska",
+    "year": 2013,
+    "value": 281950
+  },
+  {
+    "state": "North Dakota",
+    "year": 2013,
+    "value": 161275
+  },
+  {
+    "state": "Vermont",
+    "year": 2013,
+    "value": 180017
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2013,
+    "value": 408150
+  },
+  {
+    "state": "Wyoming",
+    "year": 2013,
+    "value": 188375
+  },
+  {
+    "state": "California",
+    "year": 2014,
+    "value": 407525
+  },
+  {
+    "state": "Texas",
+    "year": 2014,
+    "value": 137133
+  },
+  {
+    "state": "New York",
+    "year": 2014,
+    "value": 242067
+  },
+  {
+    "state": "Florida",
+    "year": 2014,
+    "value": 151975
+  },
+  {
+    "state": "Illinois",
+    "year": 2014,
+    "value": 145958
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2014,
+    "value": 143442
+  },
+  {
+    "state": "Ohio",
+    "year": 2014,
+    "value": 108292
+  },
+  {
+    "state": "Michigan",
+    "year": 2014,
+    "value": 102867
+  },
+  {
+    "state": "Georgia",
+    "year": 2014,
+    "value": 130225
+  },
+  {
+    "state": "North Carolina",
+    "year": 2014,
+    "value": 140458
+  },
+  {
+    "state": "New Jersey",
+    "year": 2014,
+    "value": 269733
+  },
+  {
+    "state": "Virginia",
+    "year": 2014,
+    "value": 220675
+  },
+  {
+    "state": "Washington",
+    "year": 2014,
+    "value": 251900
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2014,
+    "value": 313100
+  },
+  {
+    "state": "Indiana",
+    "year": 2014,
+    "value": 106033
+  },
+  {
+    "state": "Arizona",
+    "year": 2014,
+    "value": 179958
+  },
+  {
+    "state": "Tennessee",
+    "year": 2014,
+    "value": 119225
+  },
+  {
+    "state": "Missouri",
+    "year": 2014,
+    "value": 125708
+  },
+  {
+    "state": "Maryland",
+    "year": 2014,
+    "value": 244783
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2014,
+    "value": 147217
+  },
+  {
+    "state": "Minnesota",
+    "year": 2014,
+    "value": 173850
+  },
+  {
+    "state": "Colorado",
+    "year": 2014,
+    "value": 246900
+  },
+  {
+    "state": "Alabama",
+    "year": 2014,
+    "value": 110817
+  },
+  {
+    "state": "South Carolina",
+    "year": 2014,
+    "value": 126167
+  },
+  {
+    "state": "Louisiana",
+    "year": 2014,
+    "value": 123525
+  },
+  {
+    "state": "Kentucky",
+    "year": 2014,
+    "value": 113775
+  },
+  {
+    "state": "Oregon",
+    "year": 2014,
+    "value": 230692
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2014,
+    "value": 95125
+  },
+  {
+    "state": "Connecticut",
+    "year": 2014,
+    "value": 220600
+  },
+  {
+    "state": "Iowa",
+    "year": 2014,
+    "value": 117975
+  },
+  {
+    "state": "Mississippi",
+    "year": 2014,
+    "value": 97875
+  },
+  {
+    "state": "Arkansas",
+    "year": 2014,
+    "value": 99958
+  },
+  {
+    "state": "Kansas",
+    "year": 2014,
+    "value": 112317
+  },
+  {
+    "state": "Utah",
+    "year": 2014,
+    "value": 223733
+  },
+  {
+    "state": "Nevada",
+    "year": 2014,
+    "value": 185317
+  },
+  {
+    "state": "New Mexico",
+    "year": 2014,
+    "value": 156033
+  },
+  {
+    "state": "West Virginia",
+    "year": 2014,
+    "value": 83533
+  },
+  {
+    "state": "Nebraska",
+    "year": 2014,
+    "value": 125300
+  },
+  {
+    "state": "Idaho",
+    "year": 2014,
+    "value": 168242
+  },
+  {
+    "state": "Hawaii",
+    "year": 2014,
+    "value": 483500
+  },
+  {
+    "state": "Maine",
+    "year": 2014,
+    "value": 180917
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2014,
+    "value": 212175
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2014,
+    "value": 216983
+  },
+  {
+    "state": "Montana",
+    "year": 2014,
+    "value": 190150
+  },
+  {
+    "state": "Delaware",
+    "year": 2014,
+    "value": 196808
+  },
+  {
+    "state": "South Dakota",
+    "year": 2014,
+    "value": 147825
+  },
+  {
+    "state": "Alaska",
+    "year": 2014,
+    "value": 287900
+  },
+  {
+    "state": "North Dakota",
+    "year": 2014,
+    "value": 173558
+  },
+  {
+    "state": "Vermont",
+    "year": 2014,
+    "value": 181875
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2014,
+    "value": 443275
+  },
+  {
+    "state": "Wyoming",
+    "year": 2014,
+    "value": 192108
+  },
+  {
+    "state": "California",
+    "year": 2015,
+    "value": 435367
+  },
+  {
+    "state": "Texas",
+    "year": 2015,
+    "value": 146242
+  },
+  {
+    "state": "New York",
+    "year": 2015,
+    "value": 247342
+  },
+  {
+    "state": "Florida",
+    "year": 2015,
+    "value": 166225
+  },
+  {
+    "state": "Illinois",
+    "year": 2015,
+    "value": 152808
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2015,
+    "value": 146558
+  },
+  {
+    "state": "Ohio",
+    "year": 2015,
+    "value": 112650
+  },
+  {
+    "state": "Michigan",
+    "year": 2015,
+    "value": 112408
+  },
+  {
+    "state": "Georgia",
+    "year": 2015,
+    "value": 139325
+  },
+  {
+    "state": "North Carolina",
+    "year": 2015,
+    "value": 144733
+  },
+  {
+    "state": "New Jersey",
+    "year": 2015,
+    "value": 272750
+  },
+  {
+    "state": "Virginia",
+    "year": 2015,
+    "value": 225042
+  },
+  {
+    "state": "Washington",
+    "year": 2015,
+    "value": 272550
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2015,
+    "value": 326383
+  },
+  {
+    "state": "Indiana",
+    "year": 2015,
+    "value": 110192
+  },
+  {
+    "state": "Arizona",
+    "year": 2015,
+    "value": 190533
+  },
+  {
+    "state": "Tennessee",
+    "year": 2015,
+    "value": 125450
+  },
+  {
+    "state": "Missouri",
+    "year": 2015,
+    "value": 129617
+  },
+  {
+    "state": "Maryland",
+    "year": 2015,
+    "value": 250608
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2015,
+    "value": 150208
+  },
+  {
+    "state": "Minnesota",
+    "year": 2015,
+    "value": 182850
+  },
+  {
+    "state": "Colorado",
+    "year": 2015,
+    "value": 277517
+  },
+  {
+    "state": "Alabama",
+    "year": 2015,
+    "value": 113275
+  },
+  {
+    "state": "South Carolina",
+    "year": 2015,
+    "value": 129575
+  },
+  {
+    "state": "Louisiana",
+    "year": 2015,
+    "value": 127200
+  },
+  {
+    "state": "Kentucky",
+    "year": 2015,
+    "value": 117350
+  },
+  {
+    "state": "Oregon",
+    "year": 2015,
+    "value": 251608
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2015,
+    "value": 98083
+  },
+  {
+    "state": "Connecticut",
+    "year": 2015,
+    "value": 220942
+  },
+  {
+    "state": "Iowa",
+    "year": 2015,
+    "value": 123000
+  },
+  {
+    "state": "Mississippi",
+    "year": 2015,
+    "value": 103533
+  },
+  {
+    "state": "Arkansas",
+    "year": 2015,
+    "value": 103508
+  },
+  {
+    "state": "Kansas",
+    "year": 2015,
+    "value": 115583
+  },
+  {
+    "state": "Utah",
+    "year": 2015,
+    "value": 236542
+  },
+  {
+    "state": "Nevada",
+    "year": 2015,
+    "value": 202683
+  },
+  {
+    "state": "New Mexico",
+    "year": 2015,
+    "value": 160792
+  },
+  {
+    "state": "West Virginia",
+    "year": 2015,
+    "value": 86942
+  },
+  {
+    "state": "Nebraska",
+    "year": 2015,
+    "value": 131658
+  },
+  {
+    "state": "Idaho",
+    "year": 2015,
+    "value": 177425
+  },
+  {
+    "state": "Hawaii",
+    "year": 2015,
+    "value": 510792
+  },
+  {
+    "state": "Maine",
+    "year": 2015,
+    "value": 185342
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2015,
+    "value": 220525
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2015,
+    "value": 222475
+  },
+  {
+    "state": "Montana",
+    "year": 2015,
+    "value": 194208
+  },
+  {
+    "state": "Delaware",
+    "year": 2015,
+    "value": 203358
+  },
+  {
+    "state": "South Dakota",
+    "year": 2015,
+    "value": 156775
+  },
+  {
+    "state": "Alaska",
+    "year": 2015,
+    "value": 300575
+  },
+  {
+    "state": "North Dakota",
+    "year": 2015,
+    "value": 187042
+  },
+  {
+    "state": "Vermont",
+    "year": 2015,
+    "value": 183400
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2015,
+    "value": 469567
+  },
+  {
+    "state": "Wyoming",
+    "year": 2015,
+    "value": 200617
+  },
+  {
+    "state": "California",
+    "year": 2016,
+    "value": 466925
+  },
+  {
+    "state": "Texas",
+    "year": 2016,
+    "value": 159275
+  },
+  {
+    "state": "New York",
+    "year": 2016,
+    "value": 256800
+  },
+  {
+    "state": "Florida",
+    "year": 2016,
+    "value": 184408
+  },
+  {
+    "state": "Illinois",
+    "year": 2016,
+    "value": 159500
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2016,
+    "value": 151258
+  },
+  {
+    "state": "Ohio",
+    "year": 2016,
+    "value": 117875
+  },
+  {
+    "state": "Michigan",
+    "year": 2016,
+    "value": 121933
+  },
+  {
+    "state": "Georgia",
+    "year": 2016,
+    "value": 149400
+  },
+  {
+    "state": "North Carolina",
+    "year": 2016,
+    "value": 152117
+  },
+  {
+    "state": "New Jersey",
+    "year": 2016,
+    "value": 277392
+  },
+  {
+    "state": "Virginia",
+    "year": 2016,
+    "value": 232417
+  },
+  {
+    "state": "Washington",
+    "year": 2016,
+    "value": 303675
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2016,
+    "value": 345433
+  },
+  {
+    "state": "Indiana",
+    "year": 2016,
+    "value": 116275
+  },
+  {
+    "state": "Arizona",
+    "year": 2016,
+    "value": 206808
+  },
+  {
+    "state": "Tennessee",
+    "year": 2016,
+    "value": 134267
+  },
+  {
+    "state": "Missouri",
+    "year": 2016,
+    "value": 135800
+  },
+  {
+    "state": "Maryland",
+    "year": 2016,
+    "value": 258517
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2016,
+    "value": 158167
+  },
+  {
+    "state": "Minnesota",
+    "year": 2016,
+    "value": 195342
+  },
+  {
+    "state": "Colorado",
+    "year": 2016,
+    "value": 310658
+  },
+  {
+    "state": "Alabama",
+    "year": 2016,
+    "value": 117050
+  },
+  {
+    "state": "South Carolina",
+    "year": 2016,
+    "value": 138550
+  },
+  {
+    "state": "Louisiana",
+    "year": 2016,
+    "value": 133717
+  },
+  {
+    "state": "Kentucky",
+    "year": 2016,
+    "value": 123367
+  },
+  {
+    "state": "Oregon",
+    "year": 2016,
+    "value": 283408
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2016,
+    "value": 105567
+  },
+  {
+    "state": "Connecticut",
+    "year": 2016,
+    "value": 224900
+  },
+  {
+    "state": "Iowa",
+    "year": 2016,
+    "value": 127625
+  },
+  {
+    "state": "Mississippi",
+    "year": 2016,
+    "value": 110492
+  },
+  {
+    "state": "Arkansas",
+    "year": 2016,
+    "value": 109492
+  },
+  {
+    "state": "Kansas",
+    "year": 2016,
+    "value": 121150
+  },
+  {
+    "state": "Utah",
+    "year": 2016,
+    "value": 255067
+  },
+  {
+    "state": "Nevada",
+    "year": 2016,
+    "value": 221583
+  },
+  {
+    "state": "New Mexico",
+    "year": 2016,
+    "value": 166625
+  },
+  {
+    "state": "West Virginia",
+    "year": 2016,
+    "value": 89625
+  },
+  {
+    "state": "Nebraska",
+    "year": 2016,
+    "value": 138342
+  },
+  {
+    "state": "Idaho",
+    "year": 2016,
+    "value": 191150
+  },
+  {
+    "state": "Hawaii",
+    "year": 2016,
+    "value": 548925
+  },
+  {
+    "state": "Maine",
+    "year": 2016,
+    "value": 194233
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2016,
+    "value": 230342
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2016,
+    "value": 235983
+  },
+  {
+    "state": "Montana",
+    "year": 2016,
+    "value": 203233
+  },
+  {
+    "state": "Delaware",
+    "year": 2016,
+    "value": 214233
+  },
+  {
+    "state": "South Dakota",
+    "year": 2016,
+    "value": 165483
+  },
+  {
+    "state": "Alaska",
+    "year": 2016,
+    "value": 303492
+  },
+  {
+    "state": "North Dakota",
+    "year": 2016,
+    "value": 196208
+  },
+  {
+    "state": "Vermont",
+    "year": 2016,
+    "value": 185217
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2016,
+    "value": 502975
+  },
+  {
+    "state": "Wyoming",
+    "year": 2016,
+    "value": 207533
+  },
+  {
+    "state": "California",
+    "year": 2017,
+    "value": 504733
+  },
+  {
+    "state": "Texas",
+    "year": 2017,
+    "value": 174450
+  },
+  {
+    "state": "New York",
+    "year": 2017,
+    "value": 269733
+  },
+  {
+    "state": "Florida",
+    "year": 2017,
+    "value": 205900
+  },
+  {
+    "state": "Illinois",
+    "year": 2017,
+    "value": 167042
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2017,
+    "value": 158858
+  },
+  {
+    "state": "Ohio",
+    "year": 2017,
+    "value": 125458
+  },
+  {
+    "state": "Michigan",
+    "year": 2017,
+    "value": 133025
+  },
+  {
+    "state": "Georgia",
+    "year": 2017,
+    "value": 161067
+  },
+  {
+    "state": "North Carolina",
+    "year": 2017,
+    "value": 162767
+  },
+  {
+    "state": "New Jersey",
+    "year": 2017,
+    "value": 293367
+  },
+  {
+    "state": "Virginia",
+    "year": 2017,
+    "value": 242533
+  },
+  {
+    "state": "Washington",
+    "year": 2017,
+    "value": 340475
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2017,
+    "value": 373617
+  },
+  {
+    "state": "Indiana",
+    "year": 2017,
+    "value": 124200
+  },
+  {
+    "state": "Arizona",
+    "year": 2017,
+    "value": 223717
+  },
+  {
+    "state": "Tennessee",
+    "year": 2017,
+    "value": 146208
+  },
+  {
+    "state": "Missouri",
+    "year": 2017,
+    "value": 143083
+  },
+  {
+    "state": "Maryland",
+    "year": 2017,
+    "value": 270767
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2017,
+    "value": 168758
+  },
+  {
+    "state": "Minnesota",
+    "year": 2017,
+    "value": 212233
+  },
+  {
+    "state": "Colorado",
+    "year": 2017,
+    "value": 339692
+  },
+  {
+    "state": "Alabama",
+    "year": 2017,
+    "value": 120217
+  },
+  {
+    "state": "South Carolina",
+    "year": 2017,
+    "value": 149117
+  },
+  {
+    "state": "Louisiana",
+    "year": 2017,
+    "value": 140317
+  },
+  {
+    "state": "Kentucky",
+    "year": 2017,
+    "value": 131533
+  },
+  {
+    "state": "Oregon",
+    "year": 2017,
+    "value": 314358
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2017,
+    "value": 113842
+  },
+  {
+    "state": "Connecticut",
+    "year": 2017,
+    "value": 231008
+  },
+  {
+    "state": "Iowa",
+    "year": 2017,
+    "value": 133808
+  },
+  {
+    "state": "Mississippi",
+    "year": 2017,
+    "value": 115433
+  },
+  {
+    "state": "Arkansas",
+    "year": 2017,
+    "value": 115500
+  },
+  {
+    "state": "Kansas",
+    "year": 2017,
+    "value": 128825
+  },
+  {
+    "state": "Utah",
+    "year": 2017,
+    "value": 278650
+  },
+  {
+    "state": "Nevada",
+    "year": 2017,
+    "value": 244817
+  },
+  {
+    "state": "New Mexico",
+    "year": 2017,
+    "value": 174250
+  },
+  {
+    "state": "West Virginia",
+    "year": 2017,
+    "value": 92467
+  },
+  {
+    "state": "Nebraska",
+    "year": 2017,
+    "value": 147225
+  },
+  {
+    "state": "Idaho",
+    "year": 2017,
+    "value": 207100
+  },
+  {
+    "state": "Hawaii",
+    "year": 2017,
+    "value": 575933
+  },
+  {
+    "state": "Maine",
+    "year": 2017,
+    "value": 208400
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2017,
+    "value": 247333
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2017,
+    "value": 253992
+  },
+  {
+    "state": "Montana",
+    "year": 2017,
+    "value": 210000
+  },
+  {
+    "state": "Delaware",
+    "year": 2017,
+    "value": 222400
+  },
+  {
+    "state": "South Dakota",
+    "year": 2017,
+    "value": 172383
+  },
+  {
+    "state": "Alaska",
+    "year": 2017,
+    "value": 305775
+  },
+  {
+    "state": "North Dakota",
+    "year": 2017,
+    "value": 202775
+  },
+  {
+    "state": "Vermont",
+    "year": 2017,
+    "value": 191733
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2017,
+    "value": 542300
+  },
+  {
+    "state": "Wyoming",
+    "year": 2017,
+    "value": 210125
+  },
+  {
+    "state": "California",
+    "year": 2018,
+    "value": 537575
+  },
+  {
+    "state": "Texas",
+    "year": 2018,
+    "value": 182225
+  },
+  {
+    "state": "New York",
+    "year": 2018,
+    "value": 281000
+  },
+  {
+    "state": "Florida",
+    "year": 2018,
+    "value": 218275
+  },
+  {
+    "state": "Illinois",
+    "year": 2018,
+    "value": 172675
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2018,
+    "value": 165150
+  },
+  {
+    "state": "Ohio",
+    "year": 2018,
+    "value": 130275
+  },
+  {
+    "state": "Michigan",
+    "year": 2018,
+    "value": 139700
+  },
+  {
+    "state": "Georgia",
+    "year": 2018,
+    "value": 170375
+  },
+  {
+    "state": "North Carolina",
+    "year": 2018,
+    "value": 169825
+  },
+  {
+    "state": "New Jersey",
+    "year": 2018,
+    "value": 310550
+  },
+  {
+    "state": "Virginia",
+    "year": 2018,
+    "value": 249150
+  },
+  {
+    "state": "Washington",
+    "year": 2018,
+    "value": 366725
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2018,
+    "value": 389400
+  },
+  {
+    "state": "Indiana",
+    "year": 2018,
+    "value": 129625
+  },
+  {
+    "state": "Arizona",
+    "year": 2018,
+    "value": 235925
+  },
+  {
+    "state": "Tennessee",
+    "year": 2018,
+    "value": 153950
+  },
+  {
+    "state": "Missouri",
+    "year": 2018,
+    "value": 149775
+  },
+  {
+    "state": "Maryland",
+    "year": 2018,
+    "value": 280000
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2018,
+    "value": 175775
+  },
+  {
+    "state": "Minnesota",
+    "year": 2018,
+    "value": 223075
+  },
+  {
+    "state": "Colorado",
+    "year": 2018,
+    "value": 358300
+  },
+  {
+    "state": "Alabama",
+    "year": 2018,
+    "value": 123925
+  },
+  {
+    "state": "South Carolina",
+    "year": 2018,
+    "value": 155875
+  },
+  {
+    "state": "Louisiana",
+    "year": 2018,
+    "value": 143475
+  },
+  {
+    "state": "Kentucky",
+    "year": 2018,
+    "value": 137100
+  },
+  {
+    "state": "Oregon",
+    "year": 2018,
+    "value": 331225
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2018,
+    "value": 117950
+  },
+  {
+    "state": "Connecticut",
+    "year": 2018,
+    "value": 235350
+  },
+  {
+    "state": "Iowa",
+    "year": 2018,
+    "value": 137425
+  },
+  {
+    "state": "Mississippi",
+    "year": 2018,
+    "value": 121900
+  },
+  {
+    "state": "Arkansas",
+    "year": 2018,
+    "value": 119500
+  },
+  {
+    "state": "Kansas",
+    "year": 2018,
+    "value": 135825
+  },
+  {
+    "state": "Utah",
+    "year": 2018,
+    "value": 297825
+  },
+  {
+    "state": "Nevada",
+    "year": 2018,
+    "value": 269250
+  },
+  {
+    "state": "New Mexico",
+    "year": 2018,
+    "value": 183750
+  },
+  {
+    "state": "West Virginia",
+    "year": 2018,
+    "value": 94750
+  },
+  {
+    "state": "Nebraska",
+    "year": 2018,
+    "value": 155850
+  },
+  {
+    "state": "Idaho",
+    "year": 2018,
+    "value": 215975
+  },
+  {
+    "state": "Hawaii",
+    "year": 2018,
+    "value": 599175
+  },
+  {
+    "state": "Maine",
+    "year": 2018,
+    "value": 219400
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2018,
+    "value": 258900
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2018,
+    "value": 269875
+  },
+  {
+    "state": "Montana",
+    "year": 2018,
+    "value": 223725
+  },
+  {
+    "state": "Delaware",
+    "year": 2018,
+    "value": 230500
+  },
+  {
+    "state": "South Dakota",
+    "year": 2018,
+    "value": 181275
+  },
+  {
+    "state": "Alaska",
+    "year": 2018,
+    "value": 308975
+  },
+  {
+    "state": "North Dakota",
+    "year": 2018,
+    "value": 208500
+  },
+  {
+    "state": "Vermont",
+    "year": 2018,
+    "value": 194025
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2018,
+    "value": 560675
+  },
+  {
+    "state": "Wyoming",
+    "year": 2018,
+    "value": 215825
+  }
+];
+
+	var data = [];
+	for(var i = 0; i < json_arr.length; i++) {
+		var obj = json_arr[i];
+		if(obj.state == state)
+		{
+			data.push(obj);
+		}
+	}
+
+    var svg = d3.select("#chart1"),
+        margin = 200,
+        width = svg.attr("width") - margin,
+        height = svg.attr("height") - margin
+
+    svg.append("text")
+       .attr("transform", "translate(100,0)")
+       .attr("x", 50)
+       .attr("y", 50)
+       .attr("font-size", "24px")
+       .text("House Price")
+
+    var xScale = d3.scaleBand().range([0, width]).padding(0.4),
+        yScale = d3.scaleLinear().range([height, 0]);
+
+    var g = svg.append("g")
+               .attr("transform", "translate(" + 100 + "," + 100 + ")");
+
+    /*d3.csv("data.csv", function(error, data) {
+        if (error) {
+            throw error;
+        }
+		*/
+		
+
+        xScale.domain(data.map(function(d) { return d.year; }));
+        yScale.domain([0, d3.max(data, function(d) { return d.value; })]);
+
+        g.append("g")
+         .attr("transform", "translate(0," + height + ")")
+         .call(d3.axisBottom(xScale))
+         .append("text")
+         .attr("y", height - 250)
+         .attr("x", width - 100)
+         .attr("text-anchor", "end")
+         .attr("stroke", "black")
+         .text("Year");
+
+        g.append("g")
+         .call(d3.axisLeft(yScale).tickFormat(function(d){
+             return "$" + d;
+         })
+         .ticks(10))
+         .append("text")
+         .attr("transform", "rotate(-90)")
+         .attr("y", 6)
+         .attr("dy", "-5.1em")
+         .attr("text-anchor", "end")
+         .attr("stroke", "black")
+         .text("House Price");
+
+        g.selectAll(".bar")
+         .data(data)
+         .enter().append("rect")
+         .attr("class", "bar")
+         .attr("x", function(d) { return xScale(d.year); })
+         .attr("y", function(d) { return yScale(d.value); })
+         .attr("width", xScale.bandwidth())
+         .attr("height", function(d) { return height - yScale(d.value); });
+    //});
+}
+
+
+function collagetution_chart(state)
+{
+	
+  var json_arr = [
+  {
+    "state": "Alabama",
+    "year": 2014,
+    "value": 9599.398106
+  },
+  {
+    "state": "Arkansas",
+    "year": 2014,
+    "value": 7598.849684
+  },
+  {
+    "state": "Arizona",
+    "year": 2014,
+    "value": 10560.75131
+  },
+  {
+    "state": "California",
+    "year": 2014,
+    "value": 9512.485326
+  },
+  {
+    "state": "Colorado",
+    "year": 2014,
+    "value": 9531.727667
+  },
+  {
+    "state": "Connecticut",
+    "year": 2014,
+    "value": 10721.69373
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2014,
+    "value": 7602.537843
+  },
+  {
+    "state": "Delaware",
+    "year": 2014,
+    "value": 11798.07077
+  },
+  {
+    "state": "Florida",
+    "year": 2014,
+    "value": 6617.434147
+  },
+  {
+    "state": "Georgia",
+    "year": 2014,
+    "value": 8197.746871
+  },
+  {
+    "state": "Hawaii",
+    "year": 2014,
+    "value": 9507.763626
+  },
+  {
+    "state": "Iowa",
+    "year": 2014,
+    "value": 8212.931953
+  },
+  {
+    "state": "Idaho",
+    "year": 2014,
+    "value": 6628.299859
+  },
+  {
+    "state": "Illinois",
+    "year": 2014,
+    "value": 13183.0751
+  },
+  {
+    "state": "Indiana",
+    "year": 2014,
+    "value": 9353.077232
+  },
+  {
+    "state": "Kansas",
+    "year": 2014,
+    "value": 8099.243968
+  },
+  {
+    "state": "Kentucky",
+    "year": 2014,
+    "value": 9117.294827
+  },
+  {
+    "state": "Louisiana",
+    "year": 2014,
+    "value": 6921.828177
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2014,
+    "value": 11262.69378
+  },
+  {
+    "state": "Maryland",
+    "year": 2014,
+    "value": 8885.883432
+  },
+  {
+    "state": "Maine",
+    "year": 2014,
+    "value": 9840.859116
+  },
+  {
+    "state": "Michigan",
+    "year": 2014,
+    "value": 12155.67732
+  },
+  {
+    "state": "Minnesota",
+    "year": 2014,
+    "value": 10965.59926
+  },
+  {
+    "state": "Missouri",
+    "year": 2014,
+    "value": 8480.680739
+  },
+  {
+    "state": "Mississippi",
+    "year": 2014,
+    "value": 6879.444623
+  },
+  {
+    "state": "Montana",
+    "year": 2014,
+    "value": 6523.56422
+  },
+  {
+    "state": "North Carolina",
+    "year": 2014,
+    "value": 6828.277241
+  },
+  {
+    "state": "North Dakota",
+    "year": 2014,
+    "value": 7622.084503
+  },
+  {
+    "state": "Nebraska",
+    "year": 2014,
+    "value": 7665.412036
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2014,
+    "value": 15353.4623
+  },
+  {
+    "state": "New Jersey",
+    "year": 2014,
+    "value": 13332.189
+  },
+  {
+    "state": "New Mexico",
+    "year": 2014,
+    "value": 6245.884512
+  },
+  {
+    "state": "Nevada",
+    "year": 2014,
+    "value": 6692.95785
+  },
+  {
+    "state": "New York",
+    "year": 2014,
+    "value": 7258.112098
+  },
+  {
+    "state": "Ohio",
+    "year": 2014,
+    "value": 10417.79131
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2014,
+    "value": 6898.346881
+  },
+  {
+    "state": "Oregon",
+    "year": 2014,
+    "value": 9012.247212
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2014,
+    "value": 13415.25699
+  },
+  {
+    "state": "Puerto Rico",
+    "year": 2014,
+    "value": 2003.865248
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2014,
+    "value": 11417.52988
+  },
+  {
+    "state": "South Carolina",
+    "year": 2014,
+    "value": 11700.47593
+  },
+  {
+    "state": "South Dakota",
+    "year": 2014,
+    "value": 8009.964373
+  },
+  {
+    "state": "Tennessee",
+    "year": 2014,
+    "value": 8420.950256
+  },
+  {
+    "state": "Texas",
+    "year": 2014,
+    "value": 8928.688004
+  },
+  {
+    "state": "Utah",
+    "year": 2014,
+    "value": 6197.184302
+  },
+  {
+    "state": "Virginia",
+    "year": 2014,
+    "value": 10862.56475
+  },
+  {
+    "state": "Vermont",
+    "year": 2014,
+    "value": 14633.46483
+  },
+  {
+    "state": "Washington",
+    "year": 2014,
+    "value": 11328.88168
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2014,
+    "value": 9160.201148
+  },
+  {
+    "state": "West Virginia",
+    "year": 2014,
+    "value": 6552.466886
+  },
+  {
+    "state": "Wyoming",
+    "year": 2014,
+    "value": 4614.96577
+  },
+  {
+    "state": "Alabama",
+    "year": 2015,
+    "value": 9740.077451
+  },
+  {
+    "state": "Arkansas",
+    "year": 2015,
+    "value": 7801.849875
+  },
+  {
+    "state": "Arizona",
+    "year": 2015,
+    "value": 10681.41824
+  },
+  {
+    "state": "California",
+    "year": 2015,
+    "value": 9422.871523
+  },
+  {
+    "state": "Colorado",
+    "year": 2015,
+    "value": 9537.517868
+  },
+  {
+    "state": "Connecticut",
+    "year": 2015,
+    "value": 10937.99718
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2015,
+    "value": 7539.307143
+  },
+  {
+    "state": "Delaware",
+    "year": 2015,
+    "value": 11810.51863
+  },
+  {
+    "state": "Florida",
+    "year": 2015,
+    "value": 6508.02882
+  },
+  {
+    "state": "Georgia",
+    "year": 2015,
+    "value": 8270.186097
+  },
+  {
+    "state": "Hawaii",
+    "year": 2015,
+    "value": 9962.340396
+  },
+  {
+    "state": "Iowa",
+    "year": 2015,
+    "value": 8070.605838
+  },
+  {
+    "state": "Idaho",
+    "year": 2015,
+    "value": 6779.539715
+  },
+  {
+    "state": "Illinois",
+    "year": 2015,
+    "value": 13141.75962
+  },
+  {
+    "state": "Indiana",
+    "year": 2015,
+    "value": 9281.157948
+  },
+  {
+    "state": "Kansas",
+    "year": 2015,
+    "value": 8482.890233
+  },
+  {
+    "state": "Kentucky",
+    "year": 2015,
+    "value": 9460.32689
+  },
+  {
+    "state": "Louisiana",
+    "year": 2015,
+    "value": 7525.213228
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2015,
+    "value": 11269.223
+  },
+  {
+    "state": "Maryland",
+    "year": 2015,
+    "value": 8920.263671
+  },
+  {
+    "state": "Maine",
+    "year": 2015,
+    "value": 9805.88604
+  },
+  {
+    "state": "Michigan",
+    "year": 2015,
+    "value": 11916.73124
+  },
+  {
+    "state": "Minnesota",
+    "year": 2015,
+    "value": 10853.98701
+  },
+  {
+    "state": "Missouri",
+    "year": 2015,
+    "value": 8625.077543
+  },
+  {
+    "state": "Mississippi",
+    "year": 2015,
+    "value": 7046.892154
+  },
+  {
+    "state": "Montana",
+    "year": 2015,
+    "value": 6463.317114
+  },
+  {
+    "state": "North Carolina",
+    "year": 2015,
+    "value": 6856.275307
+  },
+  {
+    "state": "North Dakota",
+    "year": 2015,
+    "value": 7720.004022
+  },
+  {
+    "state": "Nebraska",
+    "year": 2015,
+    "value": 7536.657568
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2015,
+    "value": 15135.0503
+  },
+  {
+    "state": "New Jersey",
+    "year": 2015,
+    "value": 13361.89318
+  },
+  {
+    "state": "New Mexico",
+    "year": 2015,
+    "value": 6324.002014
+  },
+  {
+    "state": "Nevada",
+    "year": 2015,
+    "value": 6603.034564
+  },
+  {
+    "state": "New York",
+    "year": 2015,
+    "value": 7493.538584
+  },
+  {
+    "state": "Ohio",
+    "year": 2015,
+    "value": 10363.42199
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2015,
+    "value": 7275.900149
+  },
+  {
+    "state": "Oregon",
+    "year": 2015,
+    "value": 9179.289949
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2015,
+    "value": 13495.11616
+  },
+  {
+    "state": "Puerto Rico",
+    "year": 2015,
+    "value": 2144.919459
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2015,
+    "value": 11259.33864
+  },
+  {
+    "state": "South Carolina",
+    "year": 2015,
+    "value": 11764.51191
+  },
+  {
+    "state": "South Dakota",
+    "year": 2015,
+    "value": 7911.475526
+  },
+  {
+    "state": "Tennessee",
+    "year": 2015,
+    "value": 9170.323709
+  },
+  {
+    "state": "Texas",
+    "year": 2015,
+    "value": 9079.488067
+  },
+  {
+    "state": "Utah",
+    "year": 2015,
+    "value": 6329.822747
+  },
+  {
+    "state": "Virginia",
+    "year": 2015,
+    "value": 11490.23595
+  },
+  {
+    "state": "Vermont",
+    "year": 2015,
+    "value": 14873.61288
+  },
+  {
+    "state": "Washington",
+    "year": 2015,
+    "value": 10978.38501
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2015,
+    "value": 9010.828237
+  },
+  {
+    "state": "West Virginia",
+    "year": 2015,
+    "value": 6870.053222
+  },
+  {
+    "state": "Wyoming",
+    "year": 2015,
+    "value": 4773.455181
+  },
+  {
+    "state": "Alabama",
+    "year": 2016,
+    "value": 9996.094774
+  },
+  {
+    "state": "Arkansas",
+    "year": 2016,
+    "value": 8084.945817
+  },
+  {
+    "state": "Arizona",
+    "year": 2016,
+    "value": 10906.96285
+  },
+  {
+    "state": "California",
+    "year": 2016,
+    "value": 9505.483522
+  },
+  {
+    "state": "Colorado",
+    "year": 2016,
+    "value": 9998.659116
+  },
+  {
+    "state": "Connecticut",
+    "year": 2016,
+    "value": 11461.03167
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2016,
+    "value": 7611.675924
+  },
+  {
+    "state": "Delaware",
+    "year": 2016,
+    "value": 11975.70478
+  },
+  {
+    "state": "Florida",
+    "year": 2016,
+    "value": 6523.578607
+  },
+  {
+    "state": "Georgia",
+    "year": 2016,
+    "value": 8663.999465
+  },
+  {
+    "state": "Hawaii",
+    "year": 2016,
+    "value": 10436.16517
+  },
+  {
+    "state": "Iowa",
+    "year": 2016,
+    "value": 8079.829555
+  },
+  {
+    "state": "Idaho",
+    "year": 2016,
+    "value": 6993.66495
+  },
+  {
+    "state": "Illinois",
+    "year": 2016,
+    "value": 13361.74077
+  },
+  {
+    "state": "Indiana",
+    "year": 2016,
+    "value": 9353.969401
+  },
+  {
+    "state": "Kansas",
+    "year": 2016,
+    "value": 8659.913913
+  },
+  {
+    "state": "Kentucky",
+    "year": 2016,
+    "value": 9812.479625
+  },
+  {
+    "state": "Louisiana",
+    "year": 2016,
+    "value": 8338.958177
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2016,
+    "value": 11912.94379
+  },
+  {
+    "state": "Maryland",
+    "year": 2016,
+    "value": 9398.734088
+  },
+  {
+    "state": "Maine",
+    "year": 2016,
+    "value": 9818.938638
+  },
+  {
+    "state": "Michigan",
+    "year": 2016,
+    "value": 12302.42309
+  },
+  {
+    "state": "Minnesota",
+    "year": 2016,
+    "value": 11109.66335
+  },
+  {
+    "state": "Missouri",
+    "year": 2016,
+    "value": 8773.266973
+  },
+  {
+    "state": "Mississippi",
+    "year": 2016,
+    "value": 7330.91409
+  },
+  {
+    "state": "Montana",
+    "year": 2016,
+    "value": 6514.261018
+  },
+  {
+    "state": "North Carolina",
+    "year": 2016,
+    "value": 7148.500582
+  },
+  {
+    "state": "North Dakota",
+    "year": 2016,
+    "value": 7885.228061
+  },
+  {
+    "state": "Nebraska",
+    "year": 2016,
+    "value": 7803.445342
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2016,
+    "value": 15549.41491
+  },
+  {
+    "state": "New Jersey",
+    "year": 2016,
+    "value": 13648.38567
+  },
+  {
+    "state": "New Mexico",
+    "year": 2016,
+    "value": 6570.238781
+  },
+  {
+    "state": "Nevada",
+    "year": 2016,
+    "value": 6832.233329
+  },
+  {
+    "state": "New York",
+    "year": 2016,
+    "value": 7841.585217
+  },
+  {
+    "state": "Ohio",
+    "year": 2016,
+    "value": 10466.84733
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2016,
+    "value": 7641.11145
+  },
+  {
+    "state": "Oregon",
+    "year": 2016,
+    "value": 9612.03818
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2016,
+    "value": 13736.94294
+  },
+  {
+    "state": "Puerto Rico",
+    "year": 2016,
+    "value": 2164.656085
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2016,
+    "value": 11688.52226
+  },
+  {
+    "state": "South Carolina",
+    "year": 2016,
+    "value": 12119.62787
+  },
+  {
+    "state": "South Dakota",
+    "year": 2016,
+    "value": 8261.876158
+  },
+  {
+    "state": "Tennessee",
+    "year": 2016,
+    "value": 9501.499576
+  },
+  {
+    "state": "Texas",
+    "year": 2016,
+    "value": 9457.900587
+  },
+  {
+    "state": "Utah",
+    "year": 2016,
+    "value": 6526.165693
+  },
+  {
+    "state": "Virginia",
+    "year": 2016,
+    "value": 12121.66999
+  },
+  {
+    "state": "Vermont",
+    "year": 2016,
+    "value": 15378.26028
+  },
+  {
+    "state": "Washington",
+    "year": 2016,
+    "value": 10550.97723
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2016,
+    "value": 9035.45796
+  },
+  {
+    "state": "West Virginia",
+    "year": 2016,
+    "value": 7326.601439
+  },
+  {
+    "state": "Wyoming",
+    "year": 2016,
+    "value": 5016.669848
+  },
+  {
+    "state": "Alabama",
+    "year": 2017,
+    "value": 10256.05256
+  },
+  {
+    "state": "Arkansas",
+    "year": 2017,
+    "value": 8395.880239
+  },
+  {
+    "state": "Arizona",
+    "year": 2017,
+    "value": 11118.61226
+  },
+  {
+    "state": "California",
+    "year": 2017,
+    "value": 9462.416991
+  },
+  {
+    "state": "Colorado",
+    "year": 2017,
+    "value": 10463.53225
+  },
+  {
+    "state": "Connecticut",
+    "year": 2017,
+    "value": 11983.1715
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2017,
+    "value": 7978.913665
+  },
+  {
+    "state": "Delaware",
+    "year": 2017,
+    "value": 12134.47983
+  },
+  {
+    "state": "Florida",
+    "year": 2017,
+    "value": 6463.932224
+  },
+  {
+    "state": "Georgia",
+    "year": 2017,
+    "value": 8560.11611
+  },
+  {
+    "state": "Hawaii",
+    "year": 2017,
+    "value": 10833.99672
+  },
+  {
+    "state": "Iowa",
+    "year": 2017,
+    "value": 8411.954007
+  },
+  {
+    "state": "Idaho",
+    "year": 2017,
+    "value": 7133.621029
+  },
+  {
+    "state": "Illinois",
+    "year": 2017,
+    "value": 13671.2453
+  },
+  {
+    "state": "Indiana",
+    "year": 2017,
+    "value": 9403.910514
+  },
+  {
+    "state": "Kansas",
+    "year": 2017,
+    "value": 9059.791009
+  },
+  {
+    "state": "Kentucky",
+    "year": 2017,
+    "value": 10142.18959
+  },
+  {
+    "state": "Louisiana",
+    "year": 2017,
+    "value": 9086.757874
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2017,
+    "value": 12524.24288
+  },
+  {
+    "state": "Maryland",
+    "year": 2017,
+    "value": 9518.868605
+  },
+  {
+    "state": "Maine",
+    "year": 2017,
+    "value": 9853.552376
+  },
+  {
+    "state": "Michigan",
+    "year": 2017,
+    "value": 12691.31712
+  },
+  {
+    "state": "Minnesota",
+    "year": 2017,
+    "value": 11205.94447
+  },
+  {
+    "state": "Missouri",
+    "year": 2017,
+    "value": 8776.393569
+  },
+  {
+    "state": "Mississippi",
+    "year": 2017,
+    "value": 7609.420254
+  },
+  {
+    "state": "Montana",
+    "year": 2017,
+    "value": 6541.596028
+  },
+  {
+    "state": "North Carolina",
+    "year": 2017,
+    "value": 7322.740001
+  },
+  {
+    "state": "North Dakota",
+    "year": 2017,
+    "value": 8025.265121
+  },
+  {
+    "state": "Nebraska",
+    "year": 2017,
+    "value": 8029.600147
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2017,
+    "value": 15969.55927
+  },
+  {
+    "state": "New Jersey",
+    "year": 2017,
+    "value": 13795.64611
+  },
+  {
+    "state": "New Mexico",
+    "year": 2017,
+    "value": 6750.005173
+  },
+  {
+    "state": "Nevada",
+    "year": 2017,
+    "value": 7029.005219
+  },
+  {
+    "state": "New York",
+    "year": 2017,
+    "value": 7843.042536
+  },
+  {
+    "state": "Ohio",
+    "year": 2017,
+    "value": 10484.51027
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2017,
+    "value": 8170.2312
+  },
+  {
+    "state": "Oregon",
+    "year": 2017,
+    "value": 9907.42971
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2017,
+    "value": 14184.26241
+  },
+  {
+    "state": "Puerto Rico",
+    "year": 2017,
+    "value": 2212.581555
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2017,
+    "value": 11619.81085
+  },
+  {
+    "state": "South Carolina",
+    "year": 2017,
+    "value": 12416.74807
+  },
+  {
+    "state": "South Dakota",
+    "year": 2017,
+    "value": 8300.895205
+  },
+  {
+    "state": "Tennessee",
+    "year": 2017,
+    "value": 9701.115554
+  },
+  {
+    "state": "Texas",
+    "year": 2017,
+    "value": 9700.203693
+  },
+  {
+    "state": "Utah",
+    "year": 2017,
+    "value": 6672.679648
+  },
+  {
+    "state": "Virginia",
+    "year": 2017,
+    "value": 12565.24005
+  },
+  {
+    "state": "Vermont",
+    "year": 2017,
+    "value": 15829.83912
+  },
+  {
+    "state": "Washington",
+    "year": 2017,
+    "value": 9429.538608
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2017,
+    "value": 9086.98641
+  },
+  {
+    "state": "West Virginia",
+    "year": 2017,
+    "value": 7620.442599
+  },
+  {
+    "state": "Wyoming",
+    "year": 2017,
+    "value": 5141.943303
+  },
+  {
+    "state": "Alabama",
+    "year": 2018,
+    "value": 10529.65934
+  },
+  {
+    "state": "Arkansas",
+    "year": 2018,
+    "value": 8552.963874
+  },
+  {
+    "state": "Arizona",
+    "year": 2018,
+    "value": 11217.87877
+  },
+  {
+    "state": "California",
+    "year": 2018,
+    "value": 9680.084374
+  },
+  {
+    "state": "Colorado",
+    "year": 2018,
+    "value": 10796.53675
+  },
+  {
+    "state": "Connecticut",
+    "year": 2018,
+    "value": 12392.20121
+  },
+  {
+    "state": "District of Columbia",
+    "year": 2018,
+    "value": 8060
+  },
+  {
+    "state": "Delaware",
+    "year": 2018,
+    "value": 12267.22296
+  },
+  {
+    "state": "Florida",
+    "year": 2018,
+    "value": 6363.161517
+  },
+  {
+    "state": "Georgia",
+    "year": 2018,
+    "value": 8572.646954
+  },
+  {
+    "state": "Hawaii",
+    "year": 2018,
+    "value": 10657.757
+  },
+  {
+    "state": "Iowa",
+    "year": 2018,
+    "value": 8758.918162
+  },
+  {
+    "state": "Idaho",
+    "year": 2018,
+    "value": 7250.312293
+  },
+  {
+    "state": "Illinois",
+    "year": 2018,
+    "value": 13620.61143
+  },
+  {
+    "state": "Indiana",
+    "year": 2018,
+    "value": 9361.123283
+  },
+  {
+    "state": "Kansas",
+    "year": 2018,
+    "value": 9226.904969
+  },
+  {
+    "state": "Kentucky",
+    "year": 2018,
+    "value": 10301.72216
+  },
+  {
+    "state": "Louisiana",
+    "year": 2018,
+    "value": 9301.588548
+  },
+  {
+    "state": "Massachusetts",
+    "year": 2018,
+    "value": 12732.38343
+  },
+  {
+    "state": "Maryland",
+    "year": 2018,
+    "value": 9575.409234
+  },
+  {
+    "state": "Maine",
+    "year": 2018,
+    "value": 9965.171563
+  },
+  {
+    "state": "Michigan",
+    "year": 2018,
+    "value": 12934.58532
+  },
+  {
+    "state": "Minnesota",
+    "year": 2018,
+    "value": 11301.56059
+  },
+  {
+    "state": "Missouri",
+    "year": 2018,
+    "value": 8874.795649
+  },
+  {
+    "state": "Mississippi",
+    "year": 2018,
+    "value": 7988.202533
+  },
+  {
+    "state": "Montana",
+    "year": 2018,
+    "value": 6906.649797
+  },
+  {
+    "state": "North Carolina",
+    "year": 2018,
+    "value": 7384.574377
+  },
+  {
+    "state": "North Dakota",
+    "year": 2018,
+    "value": 8196.760429
+  },
+  {
+    "state": "Nebraska",
+    "year": 2018,
+    "value": 8268.532034
+  },
+  {
+    "state": "New Hampshire",
+    "year": 2018,
+    "value": 16073.41418
+  },
+  {
+    "state": "New Jersey",
+    "year": 2018,
+    "value": 13867.67924
+  },
+  {
+    "state": "New Mexico",
+    "year": 2018,
+    "value": 6921.139942
+  },
+  {
+    "state": "Nevada",
+    "year": 2018,
+    "value": 7273.656393
+  },
+  {
+    "state": "New York",
+    "year": 2018,
+    "value": 7939.975439
+  },
+  {
+    "state": "Ohio",
+    "year": 2018,
+    "value": 10505.43685
+  },
+  {
+    "state": "Oklahoma",
+    "year": 2018,
+    "value": 8459.749505
+  },
+  {
+    "state": "Oregon",
+    "year": 2018,
+    "value": 10357.4906
+  },
+  {
+    "state": "Pennsylvania",
+    "year": 2018,
+    "value": 14436.69406
+  },
+  {
+    "state": "Puerto Rico",
+    "year": 2018,
+    "value": 2166.845223
+  },
+  {
+    "state": "Rhode Island",
+    "year": 2018,
+    "value": 12225.79725
+  },
+  {
+    "state": "South Carolina",
+    "year": 2018,
+    "value": 12614.5488
+  },
+  {
+    "state": "South Dakota",
+    "year": 2018,
+    "value": 8445.623463
+  },
+  {
+    "state": "Tennessee",
+    "year": 2018,
+    "value": 9789.360002
+  },
+  {
+    "state": "Texas",
+    "year": 2018,
+    "value": 9836.429812
+  },
+  {
+    "state": "Utah",
+    "year": 2018,
+    "value": 6788.483315
+  },
+  {
+    "state": "Virginia",
+    "year": 2018,
+    "value": 12819.91338
+  },
+  {
+    "state": "Vermont",
+    "year": 2018,
+    "value": 16042.91347
+  },
+  {
+    "state": "Washington",
+    "year": 2018,
+    "value": 9479.576605
+  },
+  {
+    "state": "Wisconsin",
+    "year": 2018,
+    "value": 8962.092557
+  },
+  {
+    "state": "West Virginia",
+    "year": 2018,
+    "value": 7886.640845
+  },
+  {
+    "state": "Wyoming",
+    "year": 2018,
+    "value": 5217.000238
+  }
+];
+	
+	var data = [];
+	for(var i = 0; i < json_arr.length; i++) {
+		var obj = json_arr[i];
+		if(obj.state == state)
+		{
+			data.push(obj);
+		}
+	}
+	
+
+    var svg = d3.select("#chart2"),
+        margin = 200,
+        width = svg.attr("width") - margin,
+        height = svg.attr("height") - margin
+
+    svg.append("text")
+       .attr("transform", "translate(100,0)")
+       .attr("x", 50)
+       .attr("y", 50)
+       .attr("font-size", "24px")
+       .text("College Tuition Price")
+
+    var xScale = d3.scaleBand().range([0, width]).padding(0.4),
+        yScale = d3.scaleLinear().range([height, 0]);
+
+    var g = svg.append("g")
+               .attr("transform", "translate(" + 100 + "," + 100 + ")");
+
+    /*d3.csv("data.csv", function(error, data) {
+        if (error) {
+            throw error;
+        }
+		*/
+		
+
+        xScale.domain(data.map(function(d) { return d.year; }));
+        yScale.domain([0, d3.max(data, function(d) { return d.value; })]);
+
+        g.append("g")
+         .attr("transform", "translate(0," + height + ")")
+         .call(d3.axisBottom(xScale))
+         .append("text")
+         .attr("y", height - 250)
+         .attr("x", width - 100)
+         .attr("text-anchor", "end")
+         .attr("stroke", "black")
+         .text("Year");
+
+        g.append("g")
+         .call(d3.axisLeft(yScale).tickFormat(function(d){
+             return "$" + d;
+         })
+         .ticks(10))
+         .append("text")
+         .attr("transform", "rotate(-90)")
+         .attr("y", 6)
+         .attr("dy", "-5.1em")
+         .attr("text-anchor", "end")
+         .attr("stroke", "black")
+         .text("College Tuition Price");
+
+        g.selectAll(".bar")
+         .data(data)
+         .enter().append("rect")
+         .attr("class", "bar")
+         .attr("x", function(d) { return xScale(d.year); })
+         .attr("y", function(d) { return yScale(d.value); })
+         .attr("width", xScale.bandwidth())
+         .attr("height", function(d) { return height - yScale(d.value); });
+    //});
+}
+
+</script>
+
+
+<script>
+
+d3.csv("median_salary.csv", function(err, data) {
+
+  var config = {"color1":"#ff0000","color2":"#7CFC00","stateDataColumn":"state","valueDataColumn":"median_income"}
+  
+  var WIDTH = 800, HEIGHT = 400;
+  
+  var COLOR_COUNTS = 9;
+  
+  var SCALE = 0.7;
+  
+  function Interpolate(start, end, steps, count) {
+      var s = start,
+          e = end,
+          final = s + (((e - s) / steps) * count);
+      return Math.floor(final);
+  }
+  
+  function Color(_r, _g, _b) {
+      var r, g, b;
+      var setColors = function(_r, _g, _b) {
+          r = _r;
+          g = _g;
+          b = _b;
+      };
+  
+      setColors(_r, _g, _b);
+      this.getColors = function() {
+          var colors = {
+              r: r,
+              g: g,
+              b: b
+          };
+          return colors;
+      };
+  }
+  
+  function hexToRgb(hex) {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+      } : null;
+  }
+  
+  function valueFormat(d) {
+	  return d;
+  }
+  
+  var COLOR_FIRST = config.color1, COLOR_LAST = config.color2;
+  
+  var rgb = hexToRgb(COLOR_FIRST);
+  
+  var COLOR_START = new Color(rgb.r, rgb.g, rgb.b);
+  
+  rgb = hexToRgb(COLOR_LAST);
+  var COLOR_END = new Color(rgb.r, rgb.g, rgb.b);
+  
+  var MAP_STATE = config.stateDataColumn;
+  var MAP_VALUE = config.valueDataColumn;
+  var MAP_COMMENT = config.commentDataColumn;
+  
+  var width = WIDTH,
+      height = HEIGHT;
+  
+  var valueById = d3.map();
+  
+  var startColors = COLOR_START.getColors(),
+      endColors = COLOR_END.getColors();
+  
+  var colors = [];
+  
+  for (var i = 0; i < COLOR_COUNTS; i++) {
+    var r = Interpolate(startColors.r, endColors.r, COLOR_COUNTS, i);
+    var g = Interpolate(startColors.g, endColors.g, COLOR_COUNTS, i);
+    var b = Interpolate(startColors.b, endColors.b, COLOR_COUNTS, i);
+    colors.push(new Color(r, g, b));
+  }
+  
+  var quantize = d3.scale.quantize()
+      .domain([0, 1.0])
+      .range(d3.range(COLOR_COUNTS).map(function(i) { return i }));
+  
+  var path = d3.geo.path();
+  
+  var svg = d3.select("#canvas-svg").append("svg")
+      .attr("width", width)
+      .attr("height", height);
+  
+  d3.tsv("https://s3-us-west-2.amazonaws.com/vida-public/geo/us-state-names.tsv", function(error, names) {
+  
+  name_id_map = {};
+  id_name_map = {};
+	
+  for (var i = 0; i < names.length; i++) {
+    name_id_map[names[i].name] = names[i].id;
+    id_name_map[names[i].id] = names[i].name;
+  }
+  
+  data.forEach(function(d) {
+
+    var id = name_id_map[d[MAP_STATE]];
+    valueById.set(id, +d[MAP_VALUE]); 
+  });
+  
+  quantize.domain([d3.min(data, function(d){ return +d[MAP_VALUE] }),
+    d3.max(data, function(d){ return +d[MAP_VALUE] })]);
+  
+  d3.json("https://s3-us-west-2.amazonaws.com/vida-public/geo/us.json", function(error, us) {
+    svg.append("g")
+        .attr("class", "states-choropleth")
+      .selectAll("path")
+        .data(topojson.feature(us, us.objects.states).features)
+      .enter().append("path")
+        .attr("transform", "scale(" + SCALE + ")")
+        .style("fill", function(d) {
+          if (valueById.get(d.id)) {
+            var i = quantize(valueById.get(d.id));
+            var color = colors[i].getColors();
+            return "rgb(" + color.r + "," + color.g +
+                "," + color.b + ")";
+          } else {
+            return "";
+          }
+        })
+        .attr("d", path)
+        .on("mousemove", function(d) {
+			
+            var html = "";
+  
+            html += "<div class=\"tooltip_kv\">";
+            html += "<span class=\"tooltip_key\">";
+            html += id_name_map[d.id];
+            html += "</span>";
+            html += "<span class=\"tooltip_value\">";
+			//html += id_name_map[d.id];
+            html += (valueById.get(d.id) ? "$"+valueFormat(valueById.get(d.id)) : "");
+            html += "";
+            html += "</span>";
+            html += "</div>";
+            
+            $("#tooltip-container").html(html);
+            $(this).attr("fill-opacity", "0.8");
+            $("#tooltip-container").show();
+            
+            var coordinates = d3.mouse(this);
+            
+            var map_width = $('.states-choropleth')[0].getBoundingClientRect().width;
+            
+            if (d3.event.layerX < map_width / 2) {
+              d3.select("#tooltip-container")
+                .style("top", (d3.event.layerY + 15) + "px")
+                .style("left", (d3.event.layerX + 15) + "px");
+            } else {
+              var tooltip_width = $("#tooltip-container").width();
+              d3.select("#tooltip-container")
+                .style("top", (d3.event.layerY + 15) + "px")
+                .style("left", (d3.event.layerX - tooltip_width - 30) + "px");
+            }
+        })
+        .on("mouseout", function() {
+                $(this).attr("fill-opacity", "1.0");
+                $("#tooltip-container").hide();
+            })
+			.on("click",function(d){
+			
+				$('.container').show();
+				$('#chart1').html('');
+				$('#chart2').html('');
+				house_chart(id_name_map[d.id]);
+				collagetution_chart(id_name_map[d.id]);
+				comments(id_name_map[d.id]);
+					
+			});
+  
+    svg.append("path")
+        .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+        .attr("class", "states")
+        .attr("transform", "scale(" + SCALE + ")")
+        .attr("d", path);
+  });
+  
+  });
+});
+
+</script>
+</body>
+</html>
