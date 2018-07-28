@@ -14,6 +14,7 @@ body {
   stroke: #fff;
   stroke-linejoin: round;
 }
+.bar{ fill: #FFA500; }
 
 .states-choropleth {
   fill: #ccc;
@@ -45,13 +46,16 @@ body {
 #canvas-svg{ padding-left:150px; }
 #comments{ text-align:center; }
 .desc{ padding-bottom:30px; }
+.site_heading{ text-align:center; padding-bottom:30px; }
 </style>
 <link rel="stylesheet" href="css/bootstrap.min.css">
 </head>
 
 <body>
-
 <div class="main">
+
+<h1 class="site_heading">Choice of state to move in US</h1>
+
 <div id="tooltip-container"></div>
 
 <div id="canvas-svg"></div>
@@ -1929,9 +1933,10 @@ function house_chart(state)
 
         xScale.domain(data.map(function(d) { return d.year; }));
         yScale.domain([0, d3.max(data, function(d) { return d.value; })]);
-
+	
         g.append("g")
          .attr("transform", "translate(0," + height + ")")
+		 .attr("fill", function() { return "red"; })
          .call(d3.axisBottom(xScale))
          .append("text")
          .attr("y", height - 250)
@@ -1942,7 +1947,7 @@ function house_chart(state)
 
         g.append("g")
          .call(d3.axisLeft(yScale).tickFormat(function(d){
-             return "$" + d;
+             return "$" + d/1000 + "k";
          })
          .ticks(10))
          .append("text")
@@ -3296,7 +3301,7 @@ function collagetution_chart(state)
 
         g.append("g")
          .call(d3.axisLeft(yScale).tickFormat(function(d){
-             return "$" + d;
+             return "$" + d/1000 + "k";
          })
          .ticks(10))
          .append("text")
