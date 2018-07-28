@@ -1916,7 +1916,7 @@ function house_chart(state)
        .attr("x", 50)
        .attr("y", 50)
        .attr("font-size", "24px")
-       .text("House Price")
+       .text("House Price Trend")
 
     var xScale = d3.scaleBand().range([0, width]).padding(0.4),
         yScale = d3.scaleLinear().range([height, 0]);
@@ -1956,7 +1956,7 @@ function house_chart(state)
          .attr("dy", "-5.1em")
          .attr("text-anchor", "end")
          .attr("stroke", "black")
-         .text("House Price");
+         .text("Avg House Price");
 
         g.selectAll(".bar")
          .data(data)
@@ -3271,7 +3271,7 @@ function collagetution_chart(state)
        .attr("x", 50)
        .attr("y", 50)
        .attr("font-size", "24px")
-       .text("College Tuition Price")
+       .text("College Tuition Price Trend")
 
     var xScale = d3.scaleBand().range([0, width]).padding(0.4),
         yScale = d3.scaleLinear().range([height, 0]);
@@ -3310,7 +3310,7 @@ function collagetution_chart(state)
          .attr("dy", "-5.1em")
          .attr("text-anchor", "end")
          .attr("stroke", "black")
-         .text("College Tuition Price");
+         .text("Avg College Tuition Price");
 
         g.selectAll(".bar")
          .data(data)
