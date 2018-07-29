@@ -46,12 +46,42 @@ body {
 #comments{ text-align:center; }
 .desc{ padding-bottom:30px; }
 .site_heading{ text-align:center; padding-bottom:30px; }
-.refresh{ position:absolute;top:5px; }
+.refresh{ position:absolute; top:5px; right:120px; }
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+} 
+
 </style>
 <link rel="stylesheet" href="css/bootstrap.min.css">
 </head>
 
-<body>
+<body style="background-color: #f2f2f2;">
 <div class="main">
 <div class="refresh"><a href="" class="btn btn-primary">Refresh</a></div>
 <h1 class="site_heading"> <u><b>Choice of state/s to move in or settle within USA</b></u> </h1>
@@ -87,7 +117,7 @@ The visuallization facilitates the viewer in decision making in  various ways. U
 <script src="js/topojson.min.js"></script>
 <script src="js/jquery.min.js"></script>
 <script src="js/d3.v4.min.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js"></script>
 
 <script>
 
@@ -1908,7 +1938,16 @@ function house_chart(state)
         margin = 200,
         width = svg.attr("width") - margin,
         height = svg.attr("height") - margin
-
+	
+	var tip = d3.tip()
+	  .attr('class', 'd3-tip')
+	  .offset([-10, 0])
+	  .html(function(d) {
+		return "<strong>Value:</strong> <span style='color:red'>$" + (d.value/1000).toFixed(2) + "k</span>";
+	  })
+	  
+	svg.call(tip);
+	
     svg.append("text")
        .attr("transform", "translate(100,0)")
        .attr("x", 50)
@@ -1963,7 +2002,9 @@ function house_chart(state)
          .attr("x", function(d) { return xScale(d.year); })
          .attr("y", function(d) { return yScale(d.value); })
          .attr("width", xScale.bandwidth())
-         .attr("height", function(d) { return height - yScale(d.value); });
+         .attr("height", function(d) { return height - yScale(d.value); })
+		 .on('mouseover', tip.show)
+		 .on('mouseout', tip.hide)
     //});
 }
 
@@ -3263,6 +3304,15 @@ function collagetution_chart(state)
         margin = 200,
         width = svg.attr("width") - margin,
         height = svg.attr("height") - margin
+		
+	var tip = d3.tip()
+	  .attr('class', 'd3-tip')
+	  .offset([-10, 0])
+	  .html(function(d) {
+		return "<strong>Value:</strong> <span style='color:red'>$" + (d.value/1000).toFixed(2) + "k</span>";
+	  })
+	  
+	svg.call(tip);	
 
     svg.append("text")
        .attr("transform", "translate(100,0)")
@@ -3317,7 +3367,9 @@ function collagetution_chart(state)
          .attr("x", function(d) { return xScale(d.year); })
          .attr("y", function(d) { return yScale(d.value); })
          .attr("width", xScale.bandwidth())
-         .attr("height", function(d) { return height - yScale(d.value); });
+         .attr("height", function(d) { return height - yScale(d.value); })
+		 .on('mouseover', tip.show)
+		 .on('mouseout', tip.hide)
     //});
 }
 
