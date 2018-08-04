@@ -1,6 +1,18 @@
 <html>
 <head>
 <style>
+.button {
+    background-color: #008CBA;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
 
 body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -87,7 +99,7 @@ body {
 <h1 class="site_heading"> <u><b>Choice of state/s to move in or settle within USA</b></u> </h1>
 <p><b>Question:</b> Which state/s in USA is financially feasible to reside based on house prices and college tuition trends?</p>
 
-<p>The aim of this interactive visualization is to present an analytical overview of the trend of house prices and college tuition fees variance across US states.</p>
+<p>The aim of this interactive visualization is to present an analytical overview of the trend of house prices and college tuition fees variance across US states.Clicking on any state on the map generates the house price & college tution trend charts for that state.Hovering over the state reveals its name and median income.</p>
 <div id="tooltip-container"></div>
 
 <div id="canvas-svg"></div>
@@ -98,7 +110,7 @@ body {
 </div>
 <div class="desc">
 <span>
-<button onclick="myFunction()">About the visualization</button>
+<a href="#" class="button" <button onclick="myFunction()"></button>About the visualization</a>
 <p id="demo"></p>
 <script>
 function myFunction() {
